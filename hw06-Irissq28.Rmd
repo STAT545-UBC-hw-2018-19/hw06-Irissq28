@@ -1,0 +1,192 @@
+---
+title: "Factor and figure management"
+author: "Irissq28"
+date: "11th October, 2018"
+output:
+  github_document:
+    toc: yes
+always_allow_html: yes
+---
+
+# Load packages
+```{r}
+## load packages
+suppressPackageStartupMessages(library(gapminder))
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(gridBase))
+suppressPackageStartupMessages(library(grid))
+suppressPackageStartupMessages(library(gridExtra))
+suppressPackageStartupMessages(library(repurrrsive))
+```
+# Part 2: Writing functions
+
+
+# Part 4: Work with the singer data
+
+## Introduction to Singer
+Singer is a data package that contains an excerpt from the [Million Song Dataset](https://labrosa.ee.columbia.edu/millionsong/) desighed for teaching purpose.
+
+```{r}
+## installation
+# install.packages("devtools")
+## install singer from github
+# devtools::install_github("JoeyBernhardt/singer")
+## load singer
+suppressPackageStartupMessages(library(singer))
+## install ggmap
+# install.packages("devtools")
+# devtools::install_github("dkahle/ggmap")
+suppressPackageStartupMessages(library(ggmap))
+```
+
+### Familiar with singer_locations
+
+The singer_locations dataframe in the singer package contains geographical information stored in two different formats: 
+  1. as a (dirty!) variable named city; 
+  2. as a latitude / longitude pair (stored in latitude, longitude          respectively). 
+
+Let's familiar with the raw data first.
+
+```{r}
+knitr::kable(head(singer_locations))
+dim(singer_locations)
+summary(singer_locations)
+```
+
+
+### Filtering data
+As we can see the data above is a little messy, because it contains lots of NA in each column, To clean up this dataset, Let's do filtering first, use `drop_na()` to drop rows containing missing values
+
+```{r}
+singerloc_filtered <- singer_locations %>%
+  # filter the NA data
+  drop_na() %>%
+  select(latitude, longitude, name, city)
+knitr::kable(head(singerloc_filtered))
+dim(singerloc_filtered)
+```
+
+## Geocoding API
+Because `register_google` is not in the CRAN version, we need to install the current version from github, using `remotes::install_github("dkahle/ggmap")` or `devtools::install_github("dkahle/ggmap")`.
+
+For more information about ggmap, please check [reference 1](https://github.com/dkahle/ggmap) and [reference 2](https://github.com/dkahle/ggmap/issues/191), also to use the Geocoding API, you must get an API key first, click [Geocoding API](https://cloud.google.com/maps-platform/?__utma=102347093.1350953850.1541400936.1541401784.1541401784.1&__utmb=102347093.0.10.1541401784&__utmc=102347093&__utmx=-&__utmz=102347093.1541401784.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)&__utmv=-&__utmk=122929547&_ga=2.59821423.376122712.1541400936-1350953850.1541400936#get-started) to get one, [here](https://developers.google.com/maps/documentation/geocoding/get-api-key) is the detail steps to get an API key and how to add restrictions.
+
+```{r}
+# install ggmap
+# install.packages("devtools")
+# devtools::install_github("dkahle/ggmap")
+suppressPackageStartupMessages(library(ggmap))
+register_google(key = 'AIzaSyDvkwT7TOx1kJr8aOl2p4LcgqmgXDHHB8A')
+```
+
+
+The function revgeocode from the ggmap library allows us to retrieve some information for a pair (vector) of longitude, latitude (warning: notice the order in which you need to pass lat and long). 
+
+### TASK 1
+
+*Use `purrr` to map latitude and longitude into human readable information on the band's origin places. Notice that revgeocode(... , output = "more") outputs a dataframe, while revgeocode(... , output = "address") returns a string.*
+
+Here we need to map over multiple inputs(latitude, longitude) simultaneously, so we use [`map2()`](https://www.rdocumentation.org/packages/purrr/versions/0.2.5/topics/map2) from `purrr` package. [revgeocode](https://www.rdocumentation.org/packages/ggmap/versions/2.6.1/topics/revgeocode) reverse geocodes a longitude/latitude location using Google Maps.
+
+Because the filtered dataframe still has 4129, it will cost lots of time to query the google cloud plateform, we only use the first 20 rows in this example.
+
+```{r message=FALSE}
+singerloc_filtered20 <- singerloc_filtered[1:20,]
+# Use ggmap get the locations
+ggmap_locations <- map2_chr(singerloc_filtered20$longitude,
+                            singerloc_filtered20$latitude, 
+                            ~ revgeocode(as.numeric(c(.x, .y))))
+```
+
+Now we compare the singer location obtained by ggmap and the original singer location in singer_locations dataframe. Here we use the `cbind` function to combine data frames side-by-side.
+
+```{r}
+# combine data frames side by side
+singer_city <- singerloc_filtered20$city
+cityggmap_compare <-cbind(singer_city, ggmap_locations)
+# display table in plot
+tt <- ttheme_default(
+  # Use the smaller text size
+  # Alternate the row fill colours
+  core = list(fg_params=list(cex = 0.6),
+              bg_params=list(fill=c("lightyellow","lightblue"))), 
+  colhead = list(fg_params=list(cex = 0.6)), 
+  rowhead = list(fg_params=list(cex = 0.6)), rows=NULL)
+# show the first 15 columns of the comparison
+grid.arrange(tableGrob(head(cityggmap_compare,15),
+                       rows = NULL,theme = tt),
+             nrow = 1, top = "original city vs. singer location obtained by ggmap")
+```
+
+### TASK 2
+*Check wether the place in city corresponds to the information you retrieved.*
+To seperate the word in singer_city column, we use `boundary()`, which matches boundaries between characters, lines, sentences or words. It’s most useful with `str_split()`.
+Use `setequal()` to check the correctness of the information.
+
+```{r}
+cityggmap_compare <- data.frame(cityggmap_compare)
+# tranfer to lowercase and split by word
+singercity_lower <- cityggmap_compare$singer_city %>%
+  str_to_lower() %>% 
+  str_split(pattern = boundary("word"))
+# tranfer to lowercase and split by word
+ggmaploc_lower <- cityggmap_compare$ggmap_locations %>%
+  str_to_lower() %>% 
+  str_split(pattern = boundary("word"))
+
+# check the correctness
+setequal(singercity_lower, ggmaploc_lower)
+```
+
+As we can see, not all the place in city corresponds to the information retrieved before. Now we use `intersect` to make a further look.
+Here we define the singer_city in lower case at least match 1 word in ggamp_locations in lower case. After that we combine the correctness with the previous ggmap_compare data frame to vertify the correctness.
+
+```{r}
+correctness <- map2(singercity_lower, ggmaploc_lower, 
+                    ~intersect(.x, .y)) %>% 
+  map(function(l) {
+    return(length(l) >= 1)
+  })
+combine_correctness <-cbind(singer_city, ggmap_locations, correctness)
+knitr::kable(combine_correctness)
+```
+
+However, it can be noticed that some of the FALSE answer are uncorrect, since we ignore the abbreviation of each some states. Here is the updated version.
+
+```{r}
+patterns <- c("new york" = "ny", "pennsylvania" = "pa", "california" = "ca")
+resingercity_lower <- singercity_lower %>%
+   map(str_replace_all, patterns)
+reggmaploc_lower <-ggmaploc_lower %>%
+   map(str_replace_all, patterns)
+recheck <- map2(resingercity_lower, reggmaploc_lower, 
+                    ~intersect(.x, .y)) %>% 
+  map(function(l) {
+    return(length(l) >= 1)
+  })
+recombine_correctness <-cbind(singer_city, ggmap_locations, recheck)
+knitr::kable(recombine_correctness)
+```
+
+Now there is only one FALSE left, and it's reasonable.
+
+### TASK 3 : Data visualization
+*Give a look to the library leaflet and plot some information about the bands.*
+
+To make the plot more concise, we only visualize the first 40 rows of the filtered singer_locations(no NA) data frame, the map shows the locations of each singer.
+
+```{r}
+suppressPackageStartupMessages(library(leaflet))
+
+singerloc_filtered20 %>%
+  leaflet() %>%
+  addTiles() %>%
+  addMarkers(~longitude, ~latitude, popup = ~as.character(city), 
+             label = ~as.character(city)) %>%
+  addProviderTiles("Esri.WorldImagery")
+```
+
+
+
+
