@@ -1,7 +1,7 @@
-Factor and figure management
+Data wrangling wrap up
 ================
 Irissq28
-11th October, 2018
+5th November, 2018
 
 -   [Load packages](#load-packages)
 -   [Part 2: Writing functions](#part-2-writing-functions)
@@ -10,6 +10,7 @@ Irissq28
         -   [Familiar with singer\_locations](#familiar-with-singer_locations)
         -   [Filtering data](#filtering-data)
     -   [Geocoding API](#geocoding-api)
+    -   [Tasks](#tasks)
         -   [TASK 1](#task-1)
         -   [TASK 2](#task-2)
         -   [TASK 3 : Data visualization](#task-3-data-visualization)
@@ -158,6 +159,9 @@ register_google(key = 'AIzaSyDvkwT7TOx1kJr8aOl2p4LcgqmgXDHHB8A')
 
 The function revgeocode from the ggmap library allows us to retrieve some information for a pair (vector) of longitude, latitude (warning: notice the order in which you need to pass lat and long).
 
+Tasks
+-----
+
 ### TASK 1
 
 *Use `purrr` to map latitude and longitude into human readable information on the band's origin places. Notice that revgeocode(... , output = "more") outputs a dataframe, while revgeocode(... , output = "address") returns a string.*
@@ -252,7 +256,7 @@ knitr::kable(combine_correctness)
 | Panama                       | Calle Aviacion, Río Hato, Panama                         | TRUE        |
 | KENT, WASHINGTON             | 220 4th Ave S, Kent, WA 98032, USA                       | TRUE        |
 
-However, it can be noticed that some of the FALSE answer are uncorrect, since we ignore the abbreviation of each some states. Here is the updated version.
+However, it can be noticed that some of the FALSE answer are uncorrect, since we ignore the abbreviation of some states also works. Here is the updated version.
 
 ``` r
 patterns <- c("new york" = "ny", "pennsylvania" = "pa", "california" = "ca")
@@ -298,20 +302,15 @@ Now there is only one FALSE left, and it's reasonable.
 
 *Give a look to the library leaflet and plot some information about the bands.*
 
-To make the plot more concise, we only visualize the first 40 rows of the filtered singer\_locations(no NA) data frame, the map shows the locations of each singer.
+To make the plot more concise, we only visualize the first 20 rows of the filtered singer\_locations(no NA) data frame, the map shows the locations of each singer.
 
-``` r
-suppressPackageStartupMessages(library(leaflet))
+    suppressPackageStartupMessages(library(leaflet))
 
-singerloc_filtered20 %>%
-  leaflet() %>%
-  addTiles() %>%
-  addMarkers(~longitude, ~latitude, popup = ~as.character(city), 
-             label = ~as.character(city)) %>%
-  addProviderTiles("Esri.WorldImagery")
-```
+    singerloc_filtered20 %>%
+      leaflet() %>%
+      addTiles() %>%
+      addMarkers(~longitude, ~latitude, popup = ~as.character(city), 
+                 label = ~as.character(city)) %>%
+      addProviderTiles("Esri.WorldImagery")
 
-<!--html_preserve-->
-
-<script type="application/json" data-for="htmlwidget-673cbc8fbbcd9fe01578">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false,"attribution":"&copy; <a href=\"http://openstreetmap.org\">OpenStreetMap<\/a> contributors, <a href=\"http://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA<\/a>"}]},{"method":"addMarkers","args":[[41.88415,40.71455,42.33168,40.99471,34.20034,50.7323,19.59009,34.05349,40.5725,45.51179,51.50632,42.50172,40.43831,40.71455,37.77916,40.71455,34.05349,37.27188,8.4177,47.38028],[-87.63241,-74.00712,-83.04792,-77.60454,-119.18044,7.10169,-155.43414,-118.24532,-74.154,-122.67563,-0.12714,12.88512,-79.99745,-74.00712,-122.42005,-74.00712,-118.24532,-119.27023,-80.11278,-122.23742],null,null,null,{"interactive":true,"draggable":false,"keyboard":true,"title":"","alt":"","zIndexOffset":0,"opacity":1,"riseOnHover":false,"riseOffset":250},["Chicago, IL","New York, NY","Detroit, MI","Pennsylvania","Oxnard, CA","Bonn","Hawaii","Los Angeles, CA","Staten Island, NY","Portland, OR","UK - England - London","Poggio Bustone, Rieti, Italy","Pittsburgh, PA","New York, NY","New York, NY","New York, NY","Los Angeles, CA","California","Panama","KENT, WASHINGTON"],null,null,null,["Chicago, IL","New York, NY","Detroit, MI","Pennsylvania","Oxnard, CA","Bonn","Hawaii","Los Angeles, CA","Staten Island, NY","Portland, OR","UK - England - London","Poggio Bustone, Rieti, Italy","Pittsburgh, PA","New York, NY","New York, NY","New York, NY","Los Angeles, CA","California","Panama","KENT, WASHINGTON"],{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]},{"method":"addProviderTiles","args":["Esri.WorldImagery",null,null,{"errorTileUrl":"","noWrap":false,"detectRetina":false}]}],"limits":{"lat":[8.4177,51.50632],"lng":[-155.43414,12.88512]}},"evals":[],"jsHooks":[]}</script>
-<!--/html_preserve-->
+Because the interactice map works in Rmd and html version, to take a look of the effect, gif version is applied here, to see more about this map, please use R. ![](https://media.giphy.com/media/2eKb8x6R7bg4eUkcd1/giphy.gif)

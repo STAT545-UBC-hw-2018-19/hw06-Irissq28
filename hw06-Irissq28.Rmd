@@ -1,7 +1,7 @@
 ---
-title: "Factor and figure management"
+title: "Data wrangling wrap up"
 author: "Irissq28"
-date: "11th October, 2018"
+date: "5th November, 2018"
 output:
   github_document:
     toc: yes
@@ -83,6 +83,7 @@ register_google(key = 'AIzaSyDvkwT7TOx1kJr8aOl2p4LcgqmgXDHHB8A')
 
 The function revgeocode from the ggmap library allows us to retrieve some information for a pair (vector) of longitude, latitude (warning: notice the order in which you need to pass lat and long). 
 
+## Tasks
 ### TASK 1
 
 *Use `purrr` to map latitude and longitude into human readable information on the band's origin places. Notice that revgeocode(... , output = "more") outputs a dataframe, while revgeocode(... , output = "address") returns a string.*
@@ -152,7 +153,7 @@ combine_correctness <-cbind(singer_city, ggmap_locations, correctness)
 knitr::kable(combine_correctness)
 ```
 
-However, it can be noticed that some of the FALSE answer are uncorrect, since we ignore the abbreviation of each some states. Here is the updated version.
+However, it can be noticed that some of the FALSE answer are uncorrect, since we ignore the abbreviation of some states also works. Here is the updated version.
 
 ```{r}
 patterns <- c("new york" = "ny", "pennsylvania" = "pa", "california" = "ca")
@@ -174,9 +175,9 @@ Now there is only one FALSE left, and it's reasonable.
 ### TASK 3 : Data visualization
 *Give a look to the library leaflet and plot some information about the bands.*
 
-To make the plot more concise, we only visualize the first 40 rows of the filtered singer_locations(no NA) data frame, the map shows the locations of each singer.
+To make the plot more concise, we only visualize the first 20 rows of the filtered singer_locations(no NA) data frame, the map shows the locations of each singer.
 
-```{r}
+```{}
 suppressPackageStartupMessages(library(leaflet))
 
 singerloc_filtered20 %>%
@@ -187,6 +188,6 @@ singerloc_filtered20 %>%
   addProviderTiles("Esri.WorldImagery")
 ```
 
-
-
+Because the interactice map works in Rmd and html version, to take a look of the effect, gif version is applied here, to see more about this map, please use R.
+![](https://media.giphy.com/media/2eKb8x6R7bg4eUkcd1/giphy.gif)
 
