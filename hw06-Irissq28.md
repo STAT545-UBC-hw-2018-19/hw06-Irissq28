@@ -230,7 +230,7 @@ qua_fit_plot <- function(dat, offset = 1952, country){
   ggplot(dat,aes(x = year, y = lifeExp)) +
   geom_point() +
   geom_smooth(method = "lm",formula = y ~ I(x - offset) + I((x - offset)^2), se = FALSE) +
-  ggtitle(paste("Quadraticr regression of", country , "life expectancy from 1952 to 2007")) +
+  ggtitle(paste("Quadratic regression of", country , "life expectancy from 1952 to 2007")) +
   # the classic dark-on-light ggplot2 theme
   theme_bw() +
   # title is centerd, title size is adjusted
