@@ -21,7 +21,7 @@ suppressPackageStartupMessages(library(repurrrsive))
 # Part 2: Writing functions
 In this part, I will write some functions that do something useful to pieces of Gampminder data, the detailed instructions listed [here](http://stat545.com/Classroom/assignments/hw06/hw06.html).
 
-The workflow can be divided into 4 steps, basically followerd the instrcution of [this link](http://stat545.com/block012_function-regress-lifeexp-on-year.html).
+The workflow can be divided into 4 steps, basically followed the instruction of [this link](http://stat545.com/block012_function-regress-lifeexp-on-year.html).
 
 ## Create a data frame to work with
 
@@ -30,7 +30,7 @@ suppressPackageStartupMessages(library(gapminder))
 suppressPackageStartupMessages(library(ggplot2))
 ```
 
-I filter Canada from the data frame.
+I filtered Canada from the data frame.
 
 ```{r}
 country_filtered <- "Canada"
@@ -66,11 +66,10 @@ country_fit <- lm(lifeExp ~ I(year - earliestyear), country_data)
 coef(country_fit)
 ```
 
-Thus the intercept value is 68.8838462 and the slope is  0.2188692.
 
 ## Turn working code into a function
 
-In this part, we turn the code from last part into a function, which can estimate the coefficients of a model. To make the column name more readable, here I used `setNames`.
+In this part, we turn the code from last part into a function, which can estimate the coefficients of a model. To make the column name more readable, `setNames` is introduced.
 
 ```{r}
 # set a default year = 1952
@@ -86,7 +85,7 @@ Here we get the exactly same result as before, which means the funciton works, t
 
 ## Test on other data and in a clean workspace
 
-I cleared workspace first, [reference here](http://stat545.com/block012_function-regress-lifeexp-on-year.html), to avoid the mistake that accidentally relying on objects that were lying around in the workspace during development but that are not actually defined in your function nor passed as formal arguments.
+I cleared workspace first( [reference here](http://stat545.com/block012_function-regress-lifeexp-on-year.html)), to avoid the mistake that accidentally relying on objects that were lying around in the workspace during development but that are not actually defined in your function nor passed as formal arguments.
 
 Now let's choose other countries to test the funciton. I created a *countrytest_data* function to filter the country data from Gapminder.
 
@@ -99,7 +98,7 @@ countrytest1_data <- countrytest_data("Australia")
 knitr::kable(countrytest1_data, align = 'c')
 ```
 
-Testing on the plot linear regression function and get the coefficients function.
+Testing on the linear regression plot function and get the coefficients function.
 
 ```{r}
 lin_fit_plot(countrytest1_data, country = "Australia")
@@ -114,7 +113,7 @@ countrytest2_data <- countrytest_data("Zimbabwe")
 knitr::kable(countrytest2_data, align = "c")
 ```
 
-Testing on the plot linear regression function and get the coefficients function.
+Testing on the linear regression plot function and get the coefficients function.
 
 ```{r}
 lin_fit_plot(countrytest2_data, country = "Zimbabwe")
