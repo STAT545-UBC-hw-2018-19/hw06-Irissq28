@@ -11,7 +11,6 @@ always_allow_html: yes
 # Load packages
 ```{r}
 ## load packages
-suppressPackageStartupMessages(library(gapminder))
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(gridBase))
@@ -20,7 +19,137 @@ suppressPackageStartupMessages(library(gridExtra))
 suppressPackageStartupMessages(library(repurrrsive))
 ```
 # Part 2: Writing functions
+In this part, I will write some functions that do something useful to pieces of Gampminder data, the detailed instructions listed [here](http://stat545.com/Classroom/assignments/hw06/hw06.html).
 
+The workflow can be divided into 4 steps, basically followerd the instrcution of [this link](http://stat545.com/block012_function-regress-lifeexp-on-year.html).
+
+## Create a data frame to work with
+
+```{r}
+suppressPackageStartupMessages(library(gapminder))
+suppressPackageStartupMessages(library(ggplot2))
+```
+
+I filter Canada from the data frame.
+
+```{r}
+country_filtered <- "Canada"
+country_data <- gapminder %>%
+  filter(country == country_filtered)
+knitr::kable(country_data, align = 'c')
+```
+
+Write a function can generate linear regression plot, and then plot the data of Canada.
+
+```{r}
+lin_fit_plot <- function(dat, offset = 1952, country){
+  ggplot(dat,aes(x = year, y = lifeExp)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  ggtitle(paste("Linear regression of", country , "life expectancy from 1952 to 2007")) +
+  # the classic dark-on-light ggplot2 theme
+  theme_bw() +
+  # title is centerd, title size is adjusted
+  theme(plot.title = element_text(size = 12,hjust = 0.5))  
+}
+lin_fit_plot(country_data, country = "Canada")
+```
+
+## Get some code that works
+
+In this part, I will fit the linear model by using `lm()`, here is the [lm() documentation](https://www.rdocumentation.org/packages/stats/versions/3.5.1/topics/lm), and estimate coefficients by using `coef()`, here is the  [coef() documentation](https://www.rdocumentation.org/packages/stats/versions/3.5.1/topics/coef). To make more sense of the intercept, I restrict the earliest year is 1952 by using `I()` funciton here, which inhibits interpretation/conversion of objects.
+
+```{r}
+earliestyear <- 1952
+country_fit <- lm(lifeExp ~ I(year - earliestyear), country_data)
+# a named vector of coefficients
+coef(country_fit)
+```
+
+Thus the intercept value is 68.8838462 and the slope is  0.2188692.
+
+## Turn working code into a function
+
+In this part, we turn the code from last part into a function, which can estimate the coefficients of a model. To make the column name more readable, here I used `setNames`.
+
+```{r}
+# set a default year = 1952
+country_linfit <- function(dat, offset = 1952) {
+  fit <- lm(lifeExp ~ I(year - offset), dat )
+  setNames(coef(fit), c("intercept", "slope"))
+}
+# function testing
+country_linfit(country_data)
+```
+
+Here we get the exactly same result as before, which means the funciton works, then we can go on to next step!
+
+## Test on other data and in a clean workspace
+
+I cleared workspace first, [reference here](http://stat545.com/block012_function-regress-lifeexp-on-year.html), to avoid the mistake that accidentally relying on objects that were lying around in the workspace during development but that are not actually defined in your function nor passed as formal arguments.
+
+Now let's choose other countries to test the funciton. I created a *countrytest_data* function to filter the country data from Gapminder.
+
+```{r}
+countrytest_data <- function(country_test){
+  gapminder %>% filter(country == country_test)
+}
+# CHoose Australia
+countrytest1_data <- countrytest_data("Australia")
+knitr::kable(countrytest1_data, align = 'c')
+```
+
+Testing on the plot linear regression function and get the coefficients function.
+
+```{r}
+lin_fit_plot(countrytest1_data, country = "Australia")
+country_linfit(countrytest1_data)
+```
+
+The linear fit is good for the previous example. Let's try another country, such as Zimbabwe.
+
+```{r}
+# country data filter function
+countrytest2_data <- countrytest_data("Zimbabwe")
+knitr::kable(countrytest2_data, align = "c")
+```
+
+Testing on the plot linear regression function and get the coefficients function.
+
+```{r}
+lin_fit_plot(countrytest2_data, country = "Zimbabwe")
+country_linfit(countrytest2_data)
+```
+
+From this plot, it can be seen that this linear fit is comically bad. Let's try quadratic regression instead, the quadratic regression performs better than linear regression in most cases.
+
+The same as previous step, make a function which can get the coefficients first.
+
+```{r}
+le_qua_fit <- function(dat, offset = 1952){
+  the_quafit <- lm(lifeExp ~ I(year - offset) + I((year - offset)^2), dat)
+  setNames(coef(the_quafit), c("intercept","poly 1","poly 2"))
+}
+le_qua_fit(countrytest2_data)
+```
+
+After that create a function which can plot the quadratic regression.
+
+```{r}
+qua_fit_plot <- function(dat, offset = 1952, country){
+  ggplot(dat,aes(x = year, y = lifeExp)) +
+  geom_point() +
+  geom_smooth(method = "lm",formula = y ~ I(x - offset) + I((x - offset)^2), se = FALSE) +
+  ggtitle(paste("Quadraticr regression of", country , "life expectancy from 1952 to 2007")) +
+  # the classic dark-on-light ggplot2 theme
+  theme_bw() +
+  # title is centerd, title size is adjusted
+  theme(plot.title = element_text(size = 12,hjust = 0.5))  
+}
+qua_fit_plot(countrytest2_data, country = "Zimbabwe")
+```
+
+After comparison with linear regression, the quadratic regression works better.
 
 # Part 4: Work with the singer data
 
@@ -43,8 +172,8 @@ suppressPackageStartupMessages(library(ggmap))
 ### Familiar with singer_locations
 
 The singer_locations dataframe in the singer package contains geographical information stored in two different formats: 
-  1. as a (dirty!) variable named city; 
-  2. as a latitude / longitude pair (stored in latitude, longitude          respectively). 
+  (1). as a (dirty!) variable named city; 
+  (2). as a latitude / longitude pair (stored in latitude, longitude          respectively). 
 
 Let's familiar with the raw data first.
 
@@ -188,6 +317,8 @@ singerloc_filtered20 %>%
   addProviderTiles("Esri.WorldImagery")
 ```
 
-Because the interactice map works in Rmd and html version, to take a look of the effect, gif version is applied here, to see more about this map, please use R.
+
+Because the interactice map works in Rmd and html version, to take a look of the effect, gif version is applied here, to see more about this map, please run it in  R.
+
 ![](https://media.giphy.com/media/2eKb8x6R7bg4eUkcd1/giphy.gif)
 
